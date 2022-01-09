@@ -15,9 +15,13 @@ CURL *curl2;
 FILE *fp1;
 FILE *fp2;
 int result;
+int action = 0;
 pthread_t thread1;
 pthread_t thread2;
+pthread_t actionThread;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+bool file1succ;
+bool file2succ;
 
 typedef struct downloadStruct {
     bool first;
@@ -54,8 +58,10 @@ void* downloader1(void * data) {
 
     if(result == CURLE_OK) {
         printf("File 1 downloaded successfully!\n");
+        file1succ = true;
     } else {
         printf("Error: %s\n", curl_easy_strerror(result));
+        file1succ = false;
     }
 
     fclose(fp1);
@@ -93,8 +99,10 @@ void* downloader2(void * data) {
 
     if(result == CURLE_OK) {
         printf("File 2 downloaded successfully!\n");
+        file2succ = true;
     } else {
         printf("Error: %s\n", curl_easy_strerror(result));
+        file2succ = false;
     }
 
     fclose(fp2);
@@ -102,6 +110,47 @@ void* downloader2(void * data) {
     curl_easy_cleanup(curl2);
 
     return 0;
+}
+
+void* actions() {
+    printf("\nStlac: \n");
+    printf("1.\t ak chces pauznut stahovanie\n");
+    printf("2.\t ak chces stopnut stahovanie\n");
+    scanf("%d", &action);
+
+    if(action == 1) {
+        curl_easy_pause(curl1, CURLPAUSE_RECV);
+        curl_easy_pause(curl2, CURLPAUSE_RECV);
+        printf("Stahovanie pozastavene.\n");
+
+        int pausedAction = 0;
+        printf("\nStlac: \n");
+        printf("1.\t ak chces obnovit stahovanie\n");
+        printf("2.\t ak chces stopnut stahovanie\n");
+        scanf("%d", &pausedAction);
+
+        if(pausedAction == 1) {
+            curl_easy_pause(curl1, CURLPAUSE_RECV_CONT);
+            curl_easy_pause(curl2, CURLPAUSE_RECV_CONT);
+            printf("Stahovanie obnovene.\n");
+            actions();
+        } else if(pausedAction == 2) {
+            curl_easy_pause(curl1, CURLPAUSE_ALL);
+            curl_easy_pause(curl2, CURLPAUSE_ALL);
+            printf("Stahovanie zastavene.\n");
+            exit(0);
+        } else {
+            printf("Zly vstup.\n");
+        }
+
+    } else if (action == 2) {
+        curl_easy_pause(curl1, CURLPAUSE_ALL);
+        curl_easy_pause(curl2, CURLPAUSE_ALL);
+        printf("Stahovanie zastavene.\n");
+        exit(0);
+    } else {
+        printf("Zly vstup.\n");
+    }
 }
 
 void noOfDownloaded() {
@@ -136,7 +185,9 @@ void download() {
         D d = {true, true, &mutex};
 
         pthread_create(&thread1, NULL, downloader1, &d);
+        pthread_create(&actionThread, NULL, actions, NULL);
         pthread_join(thread1, NULL);
+        pthread_join(actionThread, NULL);
 
         pthread_mutex_destroy(&mutex);
 
@@ -175,8 +226,10 @@ void download() {
 
         pthread_create(&thread1, NULL, downloader1, &d1);
         pthread_create(&thread2, NULL, downloader2, &d2);
+        pthread_create(&actionThread, NULL, actions, NULL);
         pthread_join(thread1, NULL);
         pthread_join(thread2, NULL);
+        pthread_join(actionThread, NULL);
 
         pthread_mutex_destroy(&mutex);
     }
