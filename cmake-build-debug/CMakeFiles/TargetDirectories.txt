@@ -1,0 +1,3 @@
+/tmp/tmp.HROThSyfzj/cmake-build-debug/CMakeFiles/edit_cache.dir
+/tmp/tmp.HROThSyfzj/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/tmp/tmp.HROThSyfzj/cmake-build-debug/CMakeFiles/POSDownloader.dir

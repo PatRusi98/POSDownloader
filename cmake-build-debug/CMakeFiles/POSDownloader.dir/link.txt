@@ -1,0 +1,1 @@
+/usr/bin/cc -lcurl -g CMakeFiles/POSDownloader.dir/main.c.o -o POSDownloader  /usr/lib/x86_64-linux-gnu/libcurl.so -lpthread 
