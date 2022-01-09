@@ -22,6 +22,7 @@ pthread_t actionThread;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 bool file1succ;
 bool file2succ;
+FILE *history;
 
 typedef struct downloadStruct {
     bool first;
@@ -29,6 +30,30 @@ typedef struct downloadStruct {
 
     pthread_mutex_t * mutex;
 }D;
+
+void wrHistory(bool success, bool prvy) {
+    history = fopen("historyFinal.txt", "a");
+
+    if (success && prvy) {
+        fprintf(history, "File: %s\n", name1);
+        fprintf(history, "Source: %s\n", address1);
+        fprintf(history, "State: success\n\n");
+    } else if (success && !prvy) {
+        fprintf(history, "File: %s\n", name2);
+        fprintf(history, "Source: %s\n", address2);
+        fprintf(history, "State: success\n\n");
+    } else if (!success && prvy) {
+        fprintf(history, "File: %s\n", name1);
+        fprintf(history, "Source: %s\n", address1);
+        fprintf(history, "State: failed\n\n");
+    } else if (!success && !prvy) {
+        fprintf(history, "File: %s\n", name2);
+        fprintf(history, "Source: %s\n", address2);
+        fprintf(history, "State: failed\n\n");
+    }
+
+    fclose(history);
+}
 
 void* downloader1(void * data) {
     D * dataD = data;
@@ -63,6 +88,8 @@ void* downloader1(void * data) {
         printf("Error: %s\n", curl_easy_strerror(result));
         file1succ = false;
     }
+
+    wrHistory(file1succ, true);
 
     fclose(fp1);
 
@@ -104,6 +131,8 @@ void* downloader2(void * data) {
         printf("Error: %s\n", curl_easy_strerror(result));
         file2succ = false;
     }
+
+    wrHistory(file2succ, false);
 
     fclose(fp2);
 
